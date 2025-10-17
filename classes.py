@@ -51,29 +51,36 @@ class ActivePlayer():
 
 class CurrentSituation:
 
-    def __init__(self, game_id: int, play_id: int, defense: List[Player], offense: List[Player],
-                    frames_until_throw: int, frames_after_throw: int, is_before_throw: bool, direction: float, 
-                    yardline_number: int, input_file: str):
-        
-        if frames_until_throw > 0 and frames_after_throw > 0:
-            raise ValueError("Only one of frames_until_throw or frames_after_throw should be greater than zero.")
-        
-        if frames_until_throw > 0 and not is_before_throw:
-            raise ValueError("If frames_until_throw is greater than zero, is_before_throw must be True.")
-        
-        if frames_after_throw > 0 and is_before_throw:
-            raise ValueError("If frames_after_throw is greater than zero, is_before_throw must be False.")
-        
+    def __init__(self, game_id: int, play_id: int, defense: List[Player], offense: List[Player], input_file: str):
+
         self.game_id: int = game_id
         self.play_id: int = play_id
         self.defense: List[Player] = defense
         self.offense: List[Player] = offense
+        self.input_file: str = input_file
+
+class CurrentSituationBeforeThrow(CurrentSituation):
+
+    def __init__(self, game_id: int, play_id: int, defense: List[Player], offense: List[Player],
+                    frames_until_throw: int, ball_position: Position, ball_land: Position, direction: float, 
+                    yardline_number: int, input_file: str):
+        
+        super().__init__(game_id, play_id, defense, offense, input_file)
+        
         self.frames_until_throw: int = frames_until_throw
-        self.frames_after_throw: int = frames_after_throw
-        self.is_before_throw: bool = is_before_throw
+        self.ball_position: Position = ball_position
+        self.ball_land: Position = ball_land
         self.direction: float = direction
         self.yardline_number: int = yardline_number
-        self.input_file: str = input_file
+
+class CurrentSituationAfterThrow(CurrentSituation):
+
+    def __init__(self, game_id: int, play_id: int, defense: List[Player], offense: List[Player],
+                    frames_after_throw: int, input_file: str):
+        
+        super().__init__(game_id, play_id, defense, offense, input_file)
+        
+        self.frames_after_throw: int = frames_after_throw
 
 
 class Play:

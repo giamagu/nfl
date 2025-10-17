@@ -1,6 +1,78 @@
 import polars as pl
 from pathlib import Path
-from classes import Player, ActivePlayer, CurrentSituation, Play, Game, Position
+from classes import *
+
+def create_situation_before_throw_from_players(player_frames, play_id, frames_until_throw):
+
+    ball_position = None
+    for i in range(len(player_frames)):
+        defense = []
+        offense = []
+        player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i],
+                                    name = player_frames["player_name"][i],
+                                    height = player_frames["player_height"][i],
+                                    weight = player_frames["player_weight"][i],
+                                    birth_date = player_frames["player_birth_date"][i])
+        player.add_play(play_id)
+        active_player = ActivePlayer(player=player,
+                                    side=player_frames["player_side"][i],
+                                    role=player_frames["player_role"][i],
+                                    x=player_frames["x"][i],
+                                    y=player_frames["y"][i],
+                                    s=player_frames["s"][i],
+                                    a=player_frames["a"][i],
+                                    dir=player_frames["dir"][i],
+                                    o=player_frames["o"][i],
+                                    to_predict=player_frames["player_to_predict"][i])
+
+        
+        if active_player.side == "Defense":
+            defense.append(active_player)
+        else:
+            offense.append(active_player)
+
+        if player_frames["player_role"][i] == "Passer":
+            ball_position = Position(player_frames["x"][i], player_frames["y"][i])
+
+    ball_land = Position(player_frames["ball_land_x"][i], player_frames["ball_land_y"][i])
+    
+    situation = CurrentSituationBeforeThrow(
+        game_id, play_id, defense, offense, frames_until_throw=frames_until_throw,
+        direction=player_frames["play_direction"][i],
+        ball_land=ball_land,ball_position=ball_position,
+        yardline_number=player_frames["absolute_yardline_number"][i], input_file=game_id_to_file[game_id]
+    )
+
+    return situation
+
+def create_situation_after_throw_from_players(player_frames, play_id, frames_after_throw, defense, offense):
+    for i in range(len(player_frames)):
+        defense = []
+        offense = []
+        player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i])
+        player.add_play(play_id)
+        active_player = ActivePlayer(player=player,
+                                        side=None,
+                                        role=None,
+                                        x=player_frames["x"][i],
+                                        y=player_frames["y"][i],
+                                        s=None,
+                                        a=None,
+                                        dir=None,
+                                        o=None,
+                                        to_predict=True)
+        
+        if player.nfl_id in defense:
+            defense.append(active_player)
+        else:
+            offense.append(active_player)
+        
+    situation = CurrentSituationAfterThrow(
+        game_id, play_id, defense, offense,
+        frames_after_throw, game_id_to_file[game_id]
+    )
+
+    return situation
 
 # Percorso della cartella contenente i file
 data_folder = Path("raw_data/train")
@@ -31,75 +103,6 @@ for file in input_files:
 # Leggi e concatena tutti i file output
 output_dfs = [pl.read_csv(file) for file in output_files]
 output_data = pl.concat(output_dfs)
-
-# Supponiamo che i dati siano già stati letti e concatenati in due DataFrame: input_data e output_data
-# input_data e output_data devono essere letti dai file CSV come indicato nella tua richiesta precedente.
-
-
-def create_situation_before_throw_from_players(player_frames, play_id, frames_until_throw):
-    for i in range(len(player_frames)):
-        defense = []
-        offense = []
-        player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i],
-                                    name = player_frames["player_name"][i],
-                                    height = player_frames["player_height"][i],
-                                    weight = player_frames["player_weight"][i],
-                                    birth_date = player_frames["player_birth_date"][i])
-        player.add_play(play_id)
-        active_player = ActivePlayer(player=player,
-                                    side=player_frames["player_side"][i],
-                                    role=player_frames["player_role"][i],
-                                    x=player_frames["x"][i],
-                                    y=player_frames["y"][i],
-                                    s=player_frames["s"][i],
-                                    a=player_frames["a"][i],
-                                    dir=player_frames["dir"][i],
-                                    o=player_frames["o"][i],
-                                    to_predict=player_frames["player_to_predict"][i])
-
-        
-        if active_player.side == "Defense":
-            defense.append(active_player)
-        else:
-            offense.append(active_player)
-    
-    situation = CurrentSituation(
-        game_id, play_id, defense, offense, frames_until_throw=frames_until_throw,
-        frames_after_throw=0, is_before_throw=True, direction=player_frames["play_direction"][i],
-        yardline_number=player_frames["absolute_yardline_number"][i], input_file=game_id_to_file[game_id]
-    )
-
-    return situation
-
-def create_situation_after_throw_from_players(player_frames, play_id, frames_after_throw, defense, offense):
-    for i in range(len(player_frames)):
-        defense = []
-        offense = []
-        player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i])
-        player.add_play(play_id)
-        active_player = ActivePlayer(player=player,
-                                        side=None,
-                                        role=None,
-                                        x=player_frames["x"][i],
-                                        y=player_frames["y"][i],
-                                        s=None,
-                                        a=None,
-                                        dir=None,
-                                        o=None,
-                                        to_predict=True)
-        
-        if player.nfl_id in defense:
-            defense.append(active_player)
-        else:
-            offense.append(active_player)
-        
-    situation = CurrentSituation(
-        game_id, play_id, defense, offense, frames_until_throw=0,
-        frames_after_throw=frames_after_throw, is_before_throw=False, direction=None,
-        yardline_number=None, input_file=game_id_to_file[game_id]
-    )
-
-    return situation
 
 # Estrai tutti gli ID delle partite
 game_ids = input_data["game_id"].unique().to_list()
