@@ -5,9 +5,9 @@ from classes import *
 def create_situation_before_throw_from_players(player_frames, play_id, frames_until_throw):
 
     ball_position = None
+    defense = []
+    offense = []
     for i in range(len(player_frames)):
-        defense = []
-        offense = []
         player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i],
                                     name = player_frames["player_name"][i],
                                     height = player_frames["player_height"][i],
@@ -43,17 +43,18 @@ def create_situation_before_throw_from_players(player_frames, play_id, frames_un
         yardline_number=player_frames["absolute_yardline_number"][i], input_file=game_id_to_file[game_id]
     )
 
-    return situation
+    return situation, ball_land
 
-def create_situation_after_throw_from_players(player_frames, play_id, frames_after_throw, defense, offense):
+def create_situation_after_throw_from_players(player_frames, play_id, frames_after_throw,
+                                              ball_position, ball_land, defense, offense, sides, roles):
+    defense = []
+    offense = []
     for i in range(len(player_frames)):
-        defense = []
-        offense = []
         player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i])
         player.add_play(play_id)
         active_player = ActivePlayer(player=player,
-                                        side=None,
-                                        role=None,
+                                        side=sides[player_frames["nfl_id"][i]],
+                                        role=roles[player_frames["nfl_id"][i]],
                                         x=player_frames["x"][i],
                                         y=player_frames["y"][i],
                                         s=None,
@@ -62,13 +63,14 @@ def create_situation_after_throw_from_players(player_frames, play_id, frames_aft
                                         o=None,
                                         to_predict=True)
         
-        if player.nfl_id in defense:
+        if active_player.side in defense:
             defense.append(active_player)
         else:
             offense.append(active_player)
         
     situation = CurrentSituationAfterThrow(
         game_id, play_id, defense, offense,
+        ball_position, ball_land,
         frames_after_throw, game_id_to_file[game_id]
     )
 
@@ -140,9 +142,15 @@ for game_id in game_ids:
         frames_before_throw = len(input_frame_ids) - 1
         for frame in input_frame_ids:
             frame_input_data = play_input_data.filter(pl.col("frame_id") == frame)
-            situation = create_situation_before_throw_from_players(frame_input_data, play_id, frames_before_throw)
+            situation, ball_land = create_situation_before_throw_from_players(frame_input_data, play_id, frames_before_throw)
             situations_before_throw.append(situation)
             frames_before_throw -+ 1
+
+        sides = {}
+        roles = {}
+        for i in range(len(frame_input_data)):
+            sides[frame_input_data["nfl_id"][i]] = frame_input_data["player_side"][i]
+            roles[frame_input_data["nfl_id"][i]] = frame_input_data["player_role"][i]
         
         # Cicla sui frame di input (prima del throw)
         defense = situations_before_throw[-1].defense
@@ -151,7 +159,8 @@ for game_id in game_ids:
         for frame in output_frame_ids:
             frames_after_throw += 1
             frame_output_data = play_output_data.filter(pl.col("frame_id") == frame)
-            situation = create_situation_after_throw_from_players(frame_output_data, play_id, frames_after_throw, defense, offense)
+            situation = create_situation_after_throw_from_players(frame_output_data, play_id, frames_after_throw,
+                                                                  None, ball_land, defense, offense, sides, roles)
             true_situations_after_throw.append(situation)
         
         # Crea la Play
@@ -165,6 +174,7 @@ for game_id in game_ids:
             input_file=game_id_to_file[game_id],
         )
         plays.append(play)
+        play.show_animation()
     
     # Crea la partita
     game = Game(game_id, plays=plays, input_file=game_id_to_file[game_id])
