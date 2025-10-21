@@ -9,10 +9,8 @@ def create_situation_before_throw_from_players(player_frames, play_id, frames_un
     offense = []
     for i in range(len(player_frames)):
         player: Player = Player.get_player(nfl_id = player_frames["nfl_id"][i],
-                                    name = player_frames["player_name"][i],
                                     height = player_frames["player_height"][i],
-                                    weight = player_frames["player_weight"][i],
-                                    birth_date = player_frames["player_birth_date"][i])
+                                    weight = player_frames["player_weight"][i])
         player.add_play(play_id)
         active_player = ActivePlayer(player=player,
                                     side=player_frames["player_side"][i],
@@ -165,19 +163,20 @@ for game_id in game_ids:
         
         # Crea la Play
         play = Play(
-            game_id, play_id, direction=play_input_data[0]["play_direction"],
-            yardline_number=play_input_data[0]["absolute_yardline_number"],
+            game_id, play_id, direction=play_input_data["play_direction"][0],
+            yardline_number=play_input_data["absolute_yardline_number"][0],
             situations_before_throw=situations_before_throw,
             true_situations_after_throw=true_situations_after_throw,
-            pred_situations_after_throw=[], n_frames_output=play_input_data[0]["num_frames_output"],
-            ball_land=Position(play_input_data[0]["ball_land_x"], play_input_data[0]["ball_land_y"]),
+            pred_situations_after_throw=[], n_frames_output=play_input_data["num_frames_output"][0],
+            ball_land=Position(play_input_data["ball_land_x"][0], play_input_data["ball_land_y"][0]),
             input_file=game_id_to_file[game_id],
         )
         plays.append(play)
-        play.show_animation()
+        #play.show_animation()
     
     # Crea la partita
     game = Game(game_id, plays=plays, input_file=game_id_to_file[game_id])
+    game.save("train_games")
     games.append(game)
 
 a = 1
