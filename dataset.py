@@ -61,7 +61,7 @@ def create_situation_after_throw_from_players(player_frames, play_id, frames_aft
                                         o=None,
                                         to_predict=True)
         
-        if active_player.side in defense:
+        if active_player.side == "Defense":
             defense.append(active_player)
         else:
             offense.append(active_player)
@@ -142,7 +142,7 @@ for game_id in game_ids:
             frame_input_data = play_input_data.filter(pl.col("frame_id") == frame)
             situation, ball_land = create_situation_before_throw_from_players(frame_input_data, play_id, frames_before_throw)
             situations_before_throw.append(situation)
-            frames_before_throw -+ 1
+            frames_before_throw -= 1
 
         sides = {}
         roles = {}
@@ -177,6 +177,8 @@ for game_id in game_ids:
     # Crea la partita
     game = Game(game_id, plays=plays, input_file=game_id_to_file[game_id])
     game.save("train_games")
-    games.append(game)
+    #game.plays[0].show_animation()
+    #new_game = Game.load("train_games", game.game_id)
+    #games.append(game)
 
 a = 1

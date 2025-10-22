@@ -48,6 +48,12 @@ class Player:
             "birth_date": self.birth_date,
             "plays_involved_in": self.plays_involved_in
         }
+    
+    @staticmethod
+    def from_dict(data):
+        return Player.get_player(
+            nfl_id=data["nfl_id"]
+        )
 
     def save(self, file_path):
         """Salva il singolo Player in un file JSON."""
@@ -96,8 +102,10 @@ class ActivePlayer():
         self.to_predict: bool = to_predict
 
     def to_dict(self):
+        d = self.player.to_dict()
+        d.pop("plays_involved_in", None)
         return {
-            "player": self.player.to_dict().pop("plays_involved_in"),
+            "player": d,
             "side": self.side,
             "role": self.role,
             "position": {"x": self.position.x, "y": self.position.y},
@@ -265,9 +273,13 @@ class CurrentSituationBeforeThrow(CurrentSituation):
         # Ricostruisci ActivePlayer da dict
         active_players = [ActivePlayer.from_dict(p) for p in players_data]
         # Suddividi tra defense e offense in base alla lunghezza originale
-        n_defense = len(active_players) // 2 if "defense" not in data else len(data["defense"])
-        defense = active_players[:n_defense]
-        offense = active_players[n_defense:]
+        defense = []
+        offense = []
+        for p in active_players:
+            if p.side == "Defense":
+                defense.append(p)
+            else:
+                offense.append(p)
         ball_position = Position(**data["ball_position"]) if data["ball_position"] else None
         ball_land = Position(**data["ball_land"]) if data["ball_land"] else None
         return CurrentSituationBeforeThrow(
@@ -295,9 +307,11 @@ class CurrentSituationBeforeThrow(CurrentSituation):
     def load_all(folder_path):
         """Carica tutte le situazioni da una cartella."""
         situations = []
-        for name in os.listdir(folder_path):
+        dirs = os.listdir(folder_path)
+        for i in range(len(dirs)):
+            name = "situation_" + str(i)
             situation_folder = os.path.join(folder_path, name)
-            if os.path.isdir(situation_folder) and name.startswith("situation_"):
+            if os.path.isdir(situation_folder):
                 situations.append(CurrentSituationBeforeThrow.load(situation_folder))
         return situations
 
@@ -354,9 +368,13 @@ class CurrentSituationAfterThrow(CurrentSituation):
         # Ricostruisci ActivePlayer da dict
         active_players = [ActivePlayer.from_dict(p) for p in players_data]
         # Suddividi tra defense e offense in base alla lunghezza originale
-        n_defense = len(active_players) // 2 if "defense" not in data else len(data["defense"])
-        defense = active_players[:n_defense]
-        offense = active_players[n_defense:]
+        defense = []
+        offense = []
+        for p in active_players:
+            if p.side == "Defense":
+                defense.append(p)
+            else:
+                offense.append(p)
         ball_position = Position(**data["ball_position"]) if data["ball_position"] else None
         ball_land = Position(**data["ball_land"]) if data["ball_land"] else None
         return CurrentSituationAfterThrow(
@@ -382,9 +400,11 @@ class CurrentSituationAfterThrow(CurrentSituation):
     def load_all(folder_path):
         """Carica tutte le situazioni da una cartella."""
         situations = []
-        for name in os.listdir(folder_path):
+        dirs = os.listdir(folder_path)
+        for i in range(len(dirs)):
+            name = "situation_" + str(i)
             situation_folder = os.path.join(folder_path, name)
-            if os.path.isdir(situation_folder) and name.startswith("situation_"):
+            if os.path.isdir(situation_folder):
                 situations.append(CurrentSituationAfterThrow.load(situation_folder))
         return situations
 
