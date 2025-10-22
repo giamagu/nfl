@@ -13,10 +13,34 @@ class Position:
 
 class Player:
 
+    # Carica tutti i player dal file JSON all'avvio
     players = {}
+    players_initialized = False
+
+    @staticmethod
+    def readPlayers():
+        all_players_path = os.path.join("train_players", "all_players.json")
+        if os.path.exists(all_players_path):
+            with open(all_players_path, "r") as f:
+                players_data = json.load(f)
+            for data in players_data:
+                player = Player(
+                    nfl_id=data["nfl_id"],
+                    name=data.get("name"),
+                    height=data.get("height"),
+                    weight=data.get("weight"),
+                    birth_date=data.get("birth_date"),
+                    plays_involved_in=data.get("plays_involved_in", [])
+                )
+                Player.players[player.nfl_id] = player
 
     @staticmethod
     def get_player(nfl_id: int, name: str = None, height: float = None, weight: float = None, birth_date: str = None, plays_involved_in: List[int] = []):
+        
+        if not Player.players_initialized:
+            Player.readPlayers()
+            Player.players_initialized = True
+
         if nfl_id in Player.players:
             return Player.players.get(nfl_id, None)
         else:

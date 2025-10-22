@@ -27,25 +27,28 @@ def test_dataset_integrity(games_folder, input_csv_folder, output_csv_folder, n_
             # situation before throw
             csv_path = os.path.join(input_csv_folder, input_file)
             df = pl.read_csv(csv_path)
+            index = -situation.frames_until_throw
         else:
             # situation after throw
             csv_path = os.path.join(output_csv_folder, input_file.replace('input', 'output'))
             df = pl.read_csv(csv_path)
+            index = situation.frames_after_throw - 1
         # Cerca la riga corrispondente
         row = df.filter(pl.col('nfl_id') == nfl_id)
+        row = row.filter(pl.col('play_id') == situation.play_id)
         if row.height == 0:
             print(f"Player {nfl_id} not found in {csv_path}")
             continue
         # Confronta alcune colonne
-        x_ok = abs(row['x'][0] - player.position.x) < 1e-4
-        y_ok = abs(row['y'][0] - player.position.y) < 1e-4
+        x_ok = abs(row['x'][index] - player.position.x) < 1e-4
+        y_ok = abs(row['y'][index] - player.position.y) < 1e-4
         print(f"Test: game_id={situation.game_id}, play_id={situation.play_id}, nfl_id={nfl_id}, x_ok={x_ok}, y_ok={y_ok}")
         assert x_ok and y_ok, f"Mismatch for player {nfl_id} in {csv_path}"
     print("Test completato!")
 
 def test_player_consistency(games_folder, nfl_id):
     loader = PlayDataLoader(games_folder)
-    player_obj = Player.players.get(nfl_id, None)
+    player_obj = Player.get_player(nfl_id)
     if player_obj is None:
         print(f"Player {nfl_id} non trovato nel dataset!")
         return
@@ -62,7 +65,9 @@ def test_player_consistency(games_folder, nfl_id):
                         assert p.player.weight == player_obj.weight, f"Weight mismatch in play {situation.play_id}"
                         assert p.player.birth_date == player_obj.birth_date, f"Birth date mismatch in play {situation.play_id}"
                         assert p.player.name == player_obj.name, f"Name mismatch in play {situation.play_id}"
+                        
     print("Test completato: tutte le caratteristiche sono coerenti!")
 
 
-test_player_consistency("train_games", nfl_id=54527)
+#test_player_consistency("train_games", nfl_id=54527)
+test_dataset_integrity("train_games", os.path.join("raw_data", "train"), os.path.join("raw_data", "train"))
