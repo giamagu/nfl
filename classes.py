@@ -578,6 +578,19 @@ class Game:
                 games.append(Game.load(folder_path, game_id))
         return games
 
+    @staticmethod
+    def list_game_play_ids(games_folder):
+        index = []
+        for name in os.listdir(games_folder):
+            if name.startswith("game_") and os.path.isdir(os.path.join(games_folder, name)):
+                game_id = int(name.split("_")[1])
+                game_folder = os.path.join(games_folder, name)
+                for play_name in os.listdir(game_folder):
+                    if play_name.startswith("play_") and os.path.isdir(os.path.join(game_folder, play_name)):
+                        play_id = int(play_name.split("_")[1])
+                        index.append((game_id, play_id))
+        return index
+
 
 # Funzioni per salvare/caricare tutti i player
 def save_players(players, file_path):

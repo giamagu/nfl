@@ -1,6 +1,7 @@
 import polars as pl
 from pathlib import Path
 from classes import *
+import random
 
 def create_situation_before_throw_from_players(player_frames, play_id, frames_until_throw):
 
@@ -181,4 +182,4 @@ for game_id in game_ids:
     #new_game = Game.load("train_games", game.game_id)
     #games.append(game)
 
-a = 1
+
