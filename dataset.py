@@ -182,4 +182,5 @@ for game_id in game_ids:
     #new_game = Game.load("train_games", game.game_id)
     #games.append(game)
 
+Player.save_all_players()
 

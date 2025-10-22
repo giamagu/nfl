@@ -2,10 +2,9 @@ import os
 import random
 from classes import *
 from data_loader import PlayDataLoader
+import polars as pl
 
 def test_dataset_integrity(games_folder, input_csv_folder, output_csv_folder, n_tests=20):
-    from classes import PlayDataLoader
-    import polars as pl
     loader = PlayDataLoader(games_folder)
     # Prendi n_tests situation random
     for _ in range(n_tests):
@@ -45,7 +44,6 @@ def test_dataset_integrity(games_folder, input_csv_folder, output_csv_folder, n_
     print("Test completato!")
 
 def test_player_consistency(games_folder, nfl_id):
-    from classes import PlayDataLoader, Player
     loader = PlayDataLoader(games_folder)
     player_obj = Player.players.get(nfl_id, None)
     if player_obj is None:
@@ -65,3 +63,6 @@ def test_player_consistency(games_folder, nfl_id):
                         assert p.player.birth_date == player_obj.birth_date, f"Birth date mismatch in play {situation.play_id}"
                         assert p.player.name == player_obj.name, f"Name mismatch in play {situation.play_id}"
     print("Test completato: tutte le caratteristiche sono coerenti!")
+
+
+test_player_consistency("train_games", nfl_id=54527)

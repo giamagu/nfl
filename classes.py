@@ -84,6 +84,30 @@ class Player:
                 file_path = os.path.join(folder_path, file_name)
                 players.append(Player.load(file_path))
         return players
+    
+    @staticmethod
+    def save_all_players(folder_path="train_players"):
+        os.makedirs(folder_path, exist_ok=True)
+        file_path = os.path.join(folder_path, "all_players.json")
+        all_players = [player.to_dict() for player in Player.players.values()]
+        with open(file_path, "w") as f:
+            json.dump(all_players, f, indent=4)
+
+    @staticmethod
+    def load_all_players(folder_path="train_players"):
+        file_path = os.path.join(folder_path, "all_players.json")
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                players_data = json.load(f)
+            for data in players_data:
+                Player.get_player(
+                    nfl_id=data["nfl_id"],
+                    name=data.get("name"),
+                    height=data.get("height"),
+                    weight=data.get("weight"),
+                    birth_date=data.get("birth_date"),
+                    plays_involved_in=data.get("plays_involved_in", [])
+                )
 
 
 class ActivePlayer():
