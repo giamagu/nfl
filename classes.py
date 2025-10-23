@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import json
 import os
 
+import numpy as np
+
 
 class Position:
 
@@ -210,6 +212,25 @@ class ActivePlayer():
                 file_path = os.path.join(folder_path, file_name)
                 active_players.append(ActivePlayer.load(file_path))
         return active_players
+    
+    def get_speed_vector(self):
+        import math
+        # dir is an angle in degrees (0-360), where 0 points to the right (positive x), increasing counterclockwise
+        rad = math.radians(self.dir)
+        vx = self.speed * math.cos(rad)
+        vy = self.speed * math.sin(rad)
+        return np.array([vx, vy])
+
+    def get_position_vector(self):
+        return np.array([self.position.x, self.position.y])
+
+    def get_acc_vector(self):
+        import math
+        # dir is an angle in degrees (0-360), where 0 points to the right (positive x), increasing counterclockwise
+        rad = math.radians(self.dir)
+        ax = self.acc * math.cos(rad)
+        ay = self.acc * math.sin(rad)
+        return np.array([ax, ay])
 
 
 class CurrentSituation:
