@@ -27,7 +27,7 @@ def test_dataset_integrity(games_folder, input_csv_folder, output_csv_folder, n_
             # situation before throw
             csv_path = os.path.join(input_csv_folder, input_file)
             df = pl.read_csv(csv_path)
-            index = -situation.frames_until_throw
+            index = len(situations) - 1 -situation.frames_until_throw
         else:
             # situation after throw
             csv_path = os.path.join(output_csv_folder, input_file.replace('input', 'output'))
@@ -68,6 +68,27 @@ def test_player_consistency(games_folder, nfl_id):
                         
     print("Test completato: tutte le caratteristiche sono coerenti!")
 
+def test_activeplayer_consistency(games_folder, n_tests=20):
+    loader = PlayDataLoader(games_folder)
+    for _ in range(n_tests):
+        idx = random.randint(0, len(loader)-1)
+        train, test = loader[idx]
+        situations = train + test
+        player_info = {}
+        for situation in situations:
+            all_players = situation.defense + situation.offense
+            for p in all_players:
+                nfl_id = p.player.nfl_id
+                info = (p.side, p.role)
+                if nfl_id not in player_info:
+                    player_info[nfl_id] = info
+                else:
+                    assert player_info[nfl_id] == info, (
+                        f"Inconsistent side/role for player {nfl_id} in play {situation.play_id}: "
+                        f"expected {player_info[nfl_id]}, got {info}"
+                    )
+    print("Test completato: tutti gli ActivePlayer hanno side e role coerenti nelle 20 Play testate!")
 
-#test_player_consistency("train_games", nfl_id=54527)
 test_dataset_integrity("train_games", os.path.join("raw_data", "train"), os.path.join("raw_data", "train"))
+test_player_consistency("train_games", nfl_id=46073)
+test_activeplayer_consistency("train_games", n_tests=20)
